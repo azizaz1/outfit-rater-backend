@@ -17,6 +17,7 @@ export interface RatingRecord {
   occasion_fit: string;
   strengths: string[];
   improvements: string[];
+  weather_tip?: string;
   created_at: string;
 }
 
@@ -31,6 +32,7 @@ export async function insertRating(rating: {
   occasionFit: string;
   strengths: string[];
   improvements: string[];
+  weatherTip?: string;
   createdAt: string;
 }) {
   const { error } = await getSupabase().from('ratings').insert({
@@ -44,6 +46,7 @@ export async function insertRating(rating: {
     occasion_fit: rating.occasionFit,
     strengths: rating.strengths,
     improvements: rating.improvements,
+    weather_tip: rating.weatherTip ?? null,
     created_at: rating.createdAt,
   });
 
@@ -69,6 +72,7 @@ export async function getRatingsByUser(userId: string) {
     occasionFit: row.occasion_fit,
     strengths: row.strengths,
     improvements: row.improvements,
+    weatherTip: row.weather_tip,
     createdAt: row.created_at,
   }));
 }
