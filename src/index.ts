@@ -83,7 +83,7 @@ app.post('/api/rate-outfit', upload.single('photo'), async (req, res) => {
     const result = {
       id: uuidv4(),
       userId,
-      photoUri: req.file.path,
+      photoUri: req.body.photoUri || req.file.path,
       ...analysis,
       createdAt: new Date().toISOString(),
     };
