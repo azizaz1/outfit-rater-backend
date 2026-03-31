@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
-import { analyzeOutfit } from './analyzer';
+import { analyzeOutfit, compareOutfits } from './analyzer';
 import { insertRating, getAllRatings } from './db';
 
 dotenv.config();
@@ -59,6 +59,31 @@ app.post('/api/rate-outfit', upload.single('photo'), async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to analyze outfit.' });
   } finally {
     fs.unlink(imagePath, () => {});
+  }
+});
+
+// POST /api/compare
+app.post('/api/compare', upload.fields([{ name: 'photo1', maxCount: 1 }, { name: 'photo2', maxCount: 1 }]), async (req, res) => {
+  const files = req.files as Record<string, Express.Multer.File[]>;
+  if (!files?.photo1?.[0] || !files?.photo2?.[0]) {
+    res.status(400).json({ success: false, error: 'Two photos required.' });
+    return;
+  }
+
+  const path1 = path.resolve(files.photo1[0].path);
+  const path2 = path.resolve(files.photo2[0].path);
+  const language = req.body.language || 'English';
+  const occasion = req.body.occasion || 'Casual';
+
+  try {
+    const result = await compareOutfits(path1, path2, language, occasion);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    console.error('Compare error:', err);
+    res.status(500).json({ success: false, error: 'Failed to compare outfits.' });
+  } finally {
+    fs.unlink(path1, () => {});
+    fs.unlink(path2, () => {});
   }
 });
 
