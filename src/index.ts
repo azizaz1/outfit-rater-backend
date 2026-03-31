@@ -40,18 +40,38 @@ async function getUserId(authHeader?: string): Promise<string | null> {
   return user.id;
 }
 
+const WEATHER_CODES: Record<number, string> = {
+  0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+  45: 'Foggy', 48: 'Foggy', 51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle',
+  61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 71: 'Light snow', 73: 'Snow',
+  75: 'Heavy snow', 80: 'Rain showers', 81: 'Rain showers', 82: 'Heavy showers',
+  95: 'Thunderstorm', 96: 'Thunderstorm', 99: 'Thunderstorm',
+};
+
 async function fetchWeather(lat?: number, lon?: number): Promise<string | undefined> {
   try {
-    const url = (lat !== undefined && lon !== undefined)
-      ? `https://wttr.in/${lat},${lon}?format=j1`
-      : `https://wttr.in?format=j1`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'outfit-rater/1.0' } });
+    let finalLat = lat;
+    let finalLon = lon;
+
+    // If no coords, get location from IP
+    if (finalLat === undefined || finalLon === undefined) {
+      const ipRes = await fetch('https://ipapi.co/json/');
+      if (ipRes.ok) {
+        const ipData: any = await ipRes.json();
+        finalLat = ipData.latitude;
+        finalLon = ipData.longitude;
+      }
+    }
+
+    if (finalLat === undefined || finalLon === undefined) return undefined;
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${finalLat}&longitude=${finalLon}&current=temperature_2m,weather_code`;
+    const res = await fetch(url);
     if (!res.ok) return undefined;
     const data: any = await res.json();
-    const cond = data?.current_condition?.[0];
-    if (!cond) return undefined;
-    const desc = cond.weatherDesc?.[0]?.value ?? '';
-    const temp = cond.temp_C ?? '';
+    const temp = Math.round(data?.current?.temperature_2m);
+    const code = data?.current?.weather_code;
+    const desc = WEATHER_CODES[code] ?? 'Clear';
     console.log('Weather fetched:', desc, temp + '°C');
     return `${desc}, ${temp}°C`;
   } catch (e) {
