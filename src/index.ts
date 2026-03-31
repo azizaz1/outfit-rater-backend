@@ -29,6 +29,21 @@ const upload = multer({
   },
 });
 
+async function fetchWeather(lat: number, lon: number): Promise<string | undefined> {
+  try {
+    const res = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
+    if (!res.ok) return undefined;
+    const data: any = await res.json();
+    const cond = data?.current_condition?.[0];
+    if (!cond) return undefined;
+    const desc = cond.weatherDesc?.[0]?.value ?? '';
+    const temp = cond.temp_C ?? '';
+    return `${desc}, ${temp}°C`;
+  } catch {
+    return undefined;
+  }
+}
+
 // POST /api/rate-outfit
 app.post('/api/rate-outfit', upload.single('photo'), async (req, res) => {
   console.log('Request received, file:', req.file ? req.file.filename : 'NONE');
@@ -40,9 +55,12 @@ app.post('/api/rate-outfit', upload.single('photo'), async (req, res) => {
   const imagePath = path.resolve(req.file.path);
   const language = req.body.language || 'English';
   const occasion = req.body.occasion || 'Casual';
+  const lat = parseFloat(req.body.lat);
+  const lon = parseFloat(req.body.lon);
+  const weather = !isNaN(lat) && !isNaN(lon) ? await fetchWeather(lat, lon) : undefined;
 
   try {
-    const analysis = await analyzeOutfit(imagePath, language, occasion);
+    const analysis = await analyzeOutfit(imagePath, language, occasion, weather);
 
     const result = {
       id: uuidv4(),

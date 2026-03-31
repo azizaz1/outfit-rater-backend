@@ -17,12 +17,16 @@ export interface OutfitAnalysis {
   improvements: string[];
   celebrityMatch: string;
   shoppingSuggestions: { item: string; reason: string }[];
+  weatherTip?: string;
 }
 
 const SYSTEM_PROMPT = `You are a professional fashion stylist and outfit rater.
 Analyze outfits objectively and constructively. Always return valid JSON only, no markdown.`;
 
-function buildPrompt(language: string, occasion: string) {
+function buildPrompt(language: string, occasion: string, weather?: string) {
+  const weatherField = weather
+    ? `\n  "weatherTip": <string, one sentence on how suitable this outfit is for the current weather: ${weather}>,`
+    : '\n  "weatherTip": null,';
   return `Analyze this outfit photo for a ${occasion} occasion and return a JSON object with exactly these fields. Write all text values in ${language}:
 {
   "score": <number 1-10, one decimal, how suitable this outfit is for a ${occasion} occasion>,
@@ -33,7 +37,7 @@ function buildPrompt(language: string, occasion: string) {
   "strengths": [<3 specific positive observations for a ${occasion} occasion>],
   "improvements": [<2-3 actionable suggestions to better suit a ${occasion} occasion>],
   "celebrityMatch": <string, a real celebrity whose style closely matches this outfit>,
-  "shoppingSuggestions": [<2-3 objects with "item" (specific product name, e.g. "White leather sneakers") and "reason" (one short sentence why it would elevate this outfit)>]
+  "shoppingSuggestions": [<2-3 objects with "item" (specific product name, e.g. "White leather sneakers") and "reason" (one short sentence why it would elevate this outfit)>],${weatherField}
 }`;
 }
 
@@ -85,7 +89,7 @@ export async function compareOutfits(imagePath1: string, imagePath2: string, lan
   return JSON.parse(cleaned) as ComparisonResult;
 }
 
-export async function analyzeOutfit(imagePath: string, language: string = 'English', occasion: string = 'Casual'): Promise<OutfitAnalysis> {
+export async function analyzeOutfit(imagePath: string, language: string = 'English', occasion: string = 'Casual', weather?: string): Promise<OutfitAnalysis> {
   const imageData = fs.readFileSync(imagePath);
   const base64Image = imageData.toString('base64');
 
@@ -108,7 +112,7 @@ export async function analyzeOutfit(imagePath: string, language: string = 'Engli
           },
           {
             type: 'text',
-            text: buildPrompt(language, occasion),
+            text: buildPrompt(language, occasion, weather),
           },
         ],
       },
