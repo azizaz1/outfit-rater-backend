@@ -8,6 +8,7 @@ function getSupabase() {
 
 export interface RatingRecord {
   id: string;
+  user_id: string;
   photo_uri: string;
   score: number;
   style_category: string;
@@ -21,6 +22,7 @@ export interface RatingRecord {
 
 export async function insertRating(rating: {
   id: string;
+  userId: string;
   photoUri: string;
   score: number;
   styleCategory: string;
@@ -33,6 +35,7 @@ export async function insertRating(rating: {
 }) {
   const { error } = await getSupabase().from('ratings').insert({
     id: rating.id,
+    user_id: rating.userId,
     photo_uri: rating.photoUri,
     score: rating.score,
     style_category: rating.styleCategory,
@@ -47,10 +50,11 @@ export async function insertRating(rating: {
   if (error) throw new Error(`Supabase insert error: ${error.message}`);
 }
 
-export async function getAllRatings() {
+export async function getRatingsByUser(userId: string) {
   const { data, error } = await getSupabase()
     .from('ratings')
     .select('*')
+    .eq('user_id', userId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(`Supabase fetch error: ${error.message}`);
