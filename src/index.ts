@@ -4,12 +4,14 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { analyzeOutfit, compareOutfits } from './analyzer';
 import { insertRating, getRatingsByUser } from './db';
 
-dotenv.config();
+// Load .env only in development
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 
 const app = express();
 const PORT = process.env.PORT || 3002;
