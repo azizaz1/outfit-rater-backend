@@ -14,6 +14,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3002;
 
+// Ensure uploads directory exists
+if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
+
 app.use(cors());
 app.use(express.json());
 
