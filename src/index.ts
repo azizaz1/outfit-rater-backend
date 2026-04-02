@@ -21,6 +21,7 @@ if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, 'uploads/'),
